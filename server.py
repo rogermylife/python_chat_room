@@ -55,7 +55,12 @@ class ClientThread(Thread):
                     self.sock.send(name+' ')
                 self.sock.send('%%%end%%%')
             
-            
+           
+            elif data[0]=='chat' and len(data)==3:
+                users = [i for i in onlineUsers if i[1] == data[1]]
+                for (sock,name) in users:
+                    sock.send('chat '+self.name+' '+data[2])
+
             else:
                 print data
         print '[logout] %s from %s:%s' % (self.name,self.ip,self.port)

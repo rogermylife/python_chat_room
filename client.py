@@ -40,6 +40,10 @@ class RecvThread(Thread):
                     print data[i]
             
             
+            elif data[0]=='chat' and len(data)==3:
+                print '[chat] from %s : %s' % (data[1],data[2])
+            
+            
             print 'recv %s' % data
     def kill(self):
         print 'stop'
@@ -83,8 +87,13 @@ while True:
         print 'please connect first'
         continue
     
+    
     elif inputs[0]=='list' and len(inputs)==1:
         s.send('list')
+    
+    
+    elif inputs[0]=='chat' and len(inputs)==3:
+        s.send('chat '+inputs[1]+' '+inputs[2])
     
     
     elif inputs[0]=='exit()':
