@@ -10,6 +10,7 @@ port = 9001
 BUFFER_SIZE = 1024
 s = None
 recvThread = None
+connected = False
 
 class RecvThread(Thread):
 
@@ -30,6 +31,15 @@ class RecvThread(Thread):
             except:
                 print '%s:%s connection closed' % (self.ip,self.port)
                 break
+            
+            
+            if data[0]=='list':
+                for i in range (1,len(data)):
+                    if data[i]=='%%%end%%%':
+                        break;
+                    print data[i]
+            
+            
             print 'recv %s' % data
     def kill(self):
         print 'stop'
@@ -63,9 +73,19 @@ while True:
             s.send(name)
             recvThread = RecvThread(ip,port,s,name)
             recvThread.start()
+            connected=True
         except socket.error,msg:
             print 'socket error %s' % msg
+            connected=False
 
+    
+    elif not connected:
+        print 'please connect first'
+        continue
+    
+    elif inputs[0]=='list' and len(inputs)==1:
+        s.send('list')
+    
     
     elif inputs[0]=='exit()':
         recvThread.kill()
