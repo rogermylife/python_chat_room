@@ -32,8 +32,10 @@ class RecvThread(Thread):
                 originData = data
                 #print 'recv oringin '+originData
                 data = data.split()
+                temp = data[0]
             except:
                 print '%s:%s connection closed' % (self.ip,self.port)
+                connected = False
                 break
             
             
@@ -56,7 +58,7 @@ class RecvThread(Thread):
                     recv = recv.replace(data[2]+' ','');
                     while recv.find(' %%%end%%%')==-1:
                         recv += self.sock.recv(BUFFER_SIZE)
-                    print 'still recv?'
+                    #print 'still recv?'
                     recv = recv.replace(' %%%end%%%','')
                     recvFile.write(recv)
             
