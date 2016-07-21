@@ -24,6 +24,8 @@ class ClientThread(Thread):
         while True:
             try:
                 data = self.sock.recv(BUFFER_SIZE)
+                originData = data
+                print self.name+': recv origin   '+originData;
                 data = data.split()
                 test = data[0]
             except IndexError:
@@ -61,6 +63,28 @@ class ClientThread(Thread):
                 for (sock,name) in users:
                     sock.send('chat '+self.name+' '+data[2])
 
+
+            elif data[0]=='sendfile':
+                users = [i for i in onlineUsers if i[1] == data[1]]
+                sendFile = originData.replace('sendfile ','')
+                sendFile = sendFile.replace(data[1]+' ','')
+                sendFile = sendFile.replace(data[2]+' ','')
+                recvData = data
+                while sendFile.find( ' %%%end%%%' )==-1:
+                    sendFile += self.sock.recv(BUFFER_SIZE)
+                    print 'sendFile '+sendFile
+                sendFile = sendFile.replace(' %%%end%%%','')
+                for (sock,name) in users:
+                    sock.send('sendfile '+self.name+' '+data[2]+' ')
+                    sock.send(sendFile)
+                    sock.send(' %%%end%%%')
+
+            elif data[0]=='kick' and len(data)==2:
+                users = [i for i in onlineUsers if i[1] == data[1]]
+                onlineUsers = [i for i in onlineUsers if i[1] != data[1]]
+                for (sock,name) in users:
+                    sock.send('kick '+self.name)
+                    sock.close()
             else:
                 print data
         print '[logout] %s from %s:%s' % (self.name,self.ip,self.port)

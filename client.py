@@ -24,9 +24,13 @@ class RecvThread(Thread):
         print 'successfully connect %s:%s' % (inputs[1],inputs[2])
 
     def run(self):
+        global connected
         while True:
             try:
                 data = self.sock.recv(BUFFER_SIZE)
+
+                originData = data
+                #print 'recv oringin '+originData
                 data = data.split()
             except:
                 print '%s:%s connection closed' % (self.ip,self.port)
@@ -43,8 +47,31 @@ class RecvThread(Thread):
             elif data[0]=='chat' and len(data)==3:
                 print '[chat] from %s : %s' % (data[1],data[2])
             
+           
+            elif data[0]=='sendfile':
+                print '[sendfile] %s from %s' % (data[2],data[1])
+                with open(data[2]+'_rev','wb') as recvFile:
+                    recv = originData.replace('sendfile ','');
+                    recv = recv.replace(data[1]+' ','');
+                    recv = recv.replace(data[2]+' ','');
+                    while recv.find(' %%%end%%%')==-1:
+                        recv += self.sock.recv(BUFFER_SIZE)
+                    print 'still recv?'
+                    recv = recv.replace(' %%%end%%%','')
+                    recvFile.write(recv)
             
-            print 'recv %s' % data
+            
+            elif data[0]=='kick' and len(data)==2:
+                print 'kick by '+data[1]
+                connected=False
+                self.sock.close()
+                break;
+            
+            
+            #print 'recv %s' % data
+        print '[dissconnected]' 
+        connected =False
+
     def kill(self):
         print 'stop'
         self.sock.close()
@@ -54,6 +81,7 @@ name = raw_input("Name:  ")
 
 
 while True:
+    global connected
     line = sys.stdin.readline()
     inputs = line.split()
     if not inputs:
@@ -65,8 +93,7 @@ while True:
             print 'connect command error'
             continue
         print 'connecting...'
-        if s != None:
-            #print 'close ex'
+        if s != None and connected==True:
             s.send("exit()")
             s.close()
         try:
@@ -96,27 +123,28 @@ while True:
         s.send('chat '+inputs[1]+' '+inputs[2])
     
     
-    elif inputs[0]=='exit()':
+    elif inputs[0]=='sendfile' and len(inputs)==3:
+        try:
+            myFile = open(inputs[2],'rb')
+        except:
+            print 'no such file'
+            continue;
+        s.send('sendfile '+inputs[1]+' '+inputs[2]+' ')
+        l = myFile.read(BUFFER_SIZE)
+        while l:
+            s.send(l)
+            l=myFile.read(BUFFER_SIZE)
+        s.send(' %%%end%%%')
+        myFile.close()
+    
+    
+    elif inputs[0]=='kick' and len(inputs)==2:
+        s.send('kick '+inputs[1])
+
+
+    elif inputs[0]=='exit()' and len(inputs)==1:
         recvThread.kill()
     
     
     else :
         print 'no this command'
-
-s.connect((TCP_IP, TCP_PORT))
-with open('received_file', 'wb') as f:
-    print 'file opened'
-    while True:
-        #print('receiving data...')
-        data = s.recv(BUFFER_SIZE)
-        print('data=%s', (data))
-        if not data:
-            f.close()
-            print 'file close()'
-            break
-        # write data to a file
-        f.write(data)
-
-print('Successfully get the file')
-s.close()
-print('connection closed')
